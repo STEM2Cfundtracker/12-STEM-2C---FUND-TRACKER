@@ -49,8 +49,8 @@
             z-index: 10; /* Ensure header stays on top */
         }
         /* Explicit column widths for fixed table layout */
-        th:nth-child(1) { width: 35%; } /* Student Name - adjust as needed */
-        th:nth-child(2) { width: 35%; } /* Payment Date - adjust as needed */
+        th:nth-child(1) { width: 30%; } /* Student Name - adjust as needed */
+        th:nth-child(2) { width: 40%; } /* Payment Date - adjust as needed, needs more space */
         th:nth-child(3) { width: 30%; } /* Status - adjust as needed */
 
 
@@ -83,18 +83,18 @@
         input[type="date"]:focus, input[type="number"]:focus, input[type="text"]:focus {
             border-color: #4c51bf;
         }
-        /* Crucial for fixing date input width when flexed in a TD */
+        /* Crucial for fixing date input width when flexed inside a TD's inner div */
         td .payment-date-input {
             flex-shrink: 0; /* Prevents the date input from shrinking */
         }
-        /* Ensure the TD containing flex items aligns them well */
-        td.flex-container-cell {
-            display: flex;
-            align-items: center;
-            /* Adjust padding or other properties if internal spacing looks off */
-            padding: 12px 0px 12px 15px; /* Adjust left padding to match TH */
-            height: 100%; /* Ensure flex container takes full height of TD for alignment */
+        /* Make sure the inner flex container does not add extra padding/margin to TD */
+        td .flex-items-container {
+            width: 100%; /* Ensure it fills the TD's width */
+            display: flex; /* Apply flex to the inner container */
+            align-items: center; /* Vertically align items */
+            /* No padding here, padding is on the TD itself */
         }
+
 
         /* Status-specific background and text colors */
         .status-paid {
@@ -437,29 +437,38 @@
         function renderTable() {
             studentTableBody.innerHTML = '';
             students.forEach((student, index) => {
-                const row = document.createElement('tr');
-                row.className = `transition duration-150 ease-in-out ${getStatusClass(student.status)}`;
+                // The TD itself does NOT have flex anymore. Its inner content will.
+                const studentNameCellContent = `
+                    <div class="flex items-center">
+                        ${student.name}
+                        <button class="reset-student-btn" data-student-id="${student.id}">Reset</button>
+                    </div>
+                `;
 
-                let dateInputHtml = `
-                    <input type="date" value="${student.paymentDate}" data-student-id="${student.id}" class="payment-date-input">
+                let paymentDateCellContent = `
+                    <div class="flex items-center">
+                        <input type="date" value="${student.paymentDate}" data-student-id="${student.id}" class="payment-date-input">
                 `;
                 // Add "Apply to All" button only to the first student's date input
                 if (index === 0) {
                     const displayStyle = student.paymentDate ? 'flex' : 'none'; // Initially show if date is set
-                    dateInputHtml += `
+                    paymentDateCellContent += `
                         <div id="applyDateContainer" style="display: ${displayStyle}; align-items: center;">
                             <button class="apply-date-to-all-btn" id="applyDateToAllBtn">Apply to All</button>
                         </div>
                     `;
                 }
+                paymentDateCellContent += `</div>`; // Close the flex div for payment date
+
+                const row = document.createElement('tr');
+                row.className = `transition duration-150 ease-in-out ${getStatusClass(student.status)}`;
 
                 row.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center">
-                        ${student.name}
-                        <button class="reset-student-btn" data-student-id="${student.id}">Reset</button>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${studentNameCellContent}
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 flex items-center">
-                        ${dateInputHtml}
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                        ${paymentDateCellContent}
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                         <select data-student-id="${student.id}" class="status-select">
@@ -488,6 +497,8 @@
                 };
             });
 
+            // Note: dateInputElement.parentElement.classList.contains('flex-items-container') is not needed
+            // since only the first date input's parent div has the ID applyDateContainer
             document.querySelectorAll('.payment-date-input').forEach((dateInputElement, index) => {
                 // Add general date change listener for all date inputs
                 dateInputElement.onchange = (event) => {
