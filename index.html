@@ -369,9 +369,9 @@
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                         <select data-student-id="${student.id}" class="status-select">
                             <option value="paid" ${student.status === 'paid' ? 'selected' : ''} class="text-green-800">Paid</option>
+                            <option value="paid-late" ${student.status === 'paid-late' ? 'selected' : ''} class="text-blue-800">Paid (late)</option>
                             <option value="not-paid" ${student.status === 'not-paid' ? 'selected' : ''} class="text-yellow-800">Not Paid (with interest)</option>
                             <option value="absent" ${student.status === 'absent' ? 'selected' : ''} class="text-red-800">Absent</option>
-                            <option value="paid-late" ${student.status === 'paid-late' ? 'selected' : ''} class="text-blue-800">Paid (late)</option>
                         </select>
                     </td>
                 `;
@@ -445,7 +445,6 @@
                     updatePaymentHistoryEntry(student);
                 } else if (wasPreviouslyPaid && !isNowPaid) {
                     // If the student was paid but is no longer, remove them from history
-                    // We now use updatePaymentHistoryEntry to handle this by setting a "removed" state
                     removePaymentHistoryEntryByStudentAndPeriod(student.name, trackingPeriodInput.value);
                 }
 
@@ -528,13 +527,9 @@
             }
 
             const paymentDate = student.paymentDate || new Date().toISOString().slice(0, 10);
-            const statusText = student.status === 'paid' ? 'Paid' : 'Paid (late)';
+            // Use the student's actual status for the history text
+            const statusText = student.status === 'paid' ? 'Paid' : (student.status === 'paid-late' ? 'Paid (late)' : student.status);
 
-            // Check if an existing history entry for this student and current tracking period exists
-            const existingEntryIndex = paymentHistory.findIndex(entry =>
-                entry.studentName === student.name &&
-                entry.trackingPeriod === trackingPeriodInput.value
-            );
 
             // Generate a unique ID for the history entry using current time.
             // This is crucial for deleting individual history items later.
@@ -545,11 +540,17 @@
             const newEntry = {
                 studentName: student.name,
                 amount: collectedAmount,
-                status: statusText,
+                status: statusText, // Use the proper status text
                 date: paymentDate,
                 recordedAt: uniqueRecordedAt, // Use the more robust unique ID
                 trackingPeriod: trackingPeriodInput.value
             };
+
+            // Check if an existing history entry for this student and current tracking period exists
+            const existingEntryIndex = paymentHistory.findIndex(entry =>
+                entry.studentName === student.name &&
+                entry.trackingPeriod === trackingPeriodInput.value
+            );
 
             if (existingEntryIndex !== -1) {
                 // Update the existing entry
