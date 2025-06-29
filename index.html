@@ -32,11 +32,13 @@
             border-spacing: 0;
             margin-top: 20px;
             min-width: 700px; /* Ensures the table is wide enough for content */
+            table-layout: fixed; /* THIS IS KEY FOR FIXED COLUMN WIDTHS */
         }
         th, td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #e5e7eb; /* Light gray border for table rows */
+            vertical-align: middle; /* Ensure content is vertically centered in cells */
         }
         th {
             background-color: #edf2f7; /* Light blue-gray for table headers */
@@ -46,19 +48,11 @@
             top: 0;
             z-index: 10; /* Ensure header stays on top */
         }
-        /* Specific column widths/min-widths for better alignment */
-        th:nth-child(1), td:nth-child(1) { /* Student Name */
-            min-width: 220px; /* Increased minimum width */
-            width: 25%;
-        }
-        th:nth-child(2), td:nth-child(2) { /* Payment Date */
-            min-width: 240px; /* Ensure enough space for date + button */
-            width: 25%;
-        }
-        th:nth-child(3), td:nth-child(3) { /* Status */
-            min-width: 180px;
-            width: 20%;
-        }
+        /* Explicit column widths for fixed table layout */
+        th:nth-child(1) { width: 35%; } /* Student Name - adjust as needed */
+        th:nth-child(2) { width: 35%; } /* Payment Date - adjust as needed */
+        th:nth-child(3) { width: 30%; } /* Status - adjust as needed */
+
 
         tr:hover {
             background-color: #f9fafb; /* Light hover effect for table rows */
@@ -82,16 +76,24 @@
             border-radius: 8px;
             border: 1px solid #d1d5db;
             font-size: 0.9rem;
-            min-width: 120px;
+            min-width: 120px; /* Ensure date input has a default size */
             outline: none;
             transition: border-color 0.2s;
         }
         input[type="date"]:focus, input[type="number"]:focus, input[type="text"]:focus {
             border-color: #4c51bf;
         }
-        /* Crucial for fixing date input width when flexed */
+        /* Crucial for fixing date input width when flexed in a TD */
         td .payment-date-input {
-            flex-shrink: 0;
+            flex-shrink: 0; /* Prevents the date input from shrinking */
+        }
+        /* Ensure the TD containing flex items aligns them well */
+        td.flex-container-cell {
+            display: flex;
+            align-items: center;
+            /* Adjust padding or other properties if internal spacing looks off */
+            padding: 12px 0px 12px 15px; /* Adjust left padding to match TH */
+            height: 100%; /* Ensure flex container takes full height of TD for alignment */
         }
 
         /* Status-specific background and text colors */
