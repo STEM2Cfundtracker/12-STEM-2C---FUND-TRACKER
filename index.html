@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>12 STEM 2C - FUND TRACKER</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         /* Custom styles to enhance the visual appeal and responsiveness */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Light gray background */
+            font-family: 'Nunito', 'Inter', sans-serif; /* Prioritize Nunito */
+            background-color: #f7f7f7; /* Very light, warm gray background */
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -18,72 +18,79 @@
             padding: 20px;
         }
         .container {
-            background-color: #ffffff; /* White container background */
-            border-radius: 12px; /* Rounded corners for the container */
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            background-color: #ffffff; /* Pure white container background */
+            border-radius: 16px; /* Slightly more rounded corners for the container */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); /* Softer shadow */
             padding: 30px;
             width: 100%;
             max-width: 1200px; /* Maximum width for the container */
             overflow-x: auto; /* Enable horizontal scrolling for narrow screens */
         }
+        h1, h2 {
+            color: #3f3f46; /* Soft charcoal gray for headings */
+        }
         table {
             width: 100%;
             border-collapse: separate; /* Allows for border-spacing */
             border-spacing: 0;
-            margin-top: 20px;
+            margin-top: 25px; /* Slightly more space */
             min-width: 700px; /* Ensures the table is wide enough for content */
             table-layout: fixed; /* THIS IS KEY FOR FIXED COLUMN WIDTHS */
         }
         th, td {
-            padding: 12px 15px;
+            padding: 14px 18px; /* Slightly more padding for a softer look */
             text-align: left;
-            border-bottom: 1px solid #e5e7eb; /* Light gray border for table rows */
+            border-bottom: 1px solid #e0e0e0; /* Lighter, subtle gray border for table rows */
             vertical-align: middle; /* Ensure content is vertically centered in cells */
             word-wrap: break-word; /* Allow long words to break and wrap */
             overflow-wrap: break-word; /* Standard property for word wrapping */
         }
         th {
-            background-color: #edf2f7; /* Light blue-gray for table headers */
-            font-weight: 600; /* Semi-bold font */
-            color: #4a5568; /* Dark gray text color */
+            background-color: #f5f5f5; /* Very light gray for table headers */
+            font-weight: 700; /* Bolder font for headers */
+            color: #52525b; /* Soft darker gray text color */
             position: sticky; /* Make header sticky when scrolling */
             top: 0;
             z-index: 10; /* Ensure header stays on top */
+            font-size: 0.9rem; /* Slightly smaller for compactness */
         }
         /* Explicit column widths for fixed table layout (main table) */
         th:nth-child(1) { width: 30%; } /* Student Name - adjust as needed */
         th:nth-child(2) { width: 40%; } /* Payment Date - adjust as needed, needs more space */
         th:nth-child(3) { width: 30%; } /* Status - adjust as needed */
 
-
         tr:hover {
-            background-color: #f9fafb; /* Light hover effect for table rows */
+            background-color: #fdfdfd; /* Very light hover effect for table rows */
         }
         select {
             padding: 8px;
             border-radius: 8px; /* Rounded corners for select dropdowns */
-            border: 1px solid #d1d5db; /* Light gray border */
+            border: 1px solid #dcdcdc; /* Lighter gray border */
             background-color: #ffffff;
             font-size: 0.9rem;
             min-width: 140px; /* Minimum width for dropdowns */
             cursor: pointer;
             outline: none; /* Remove outline on focus */
-            transition: border-color 0.2s; /* Smooth transition for border */
+            transition: border-color 0.2s, box-shadow 0.2s; /* Smooth transition */
+            color: #52525b; /* Default text color for select */
         }
         select:focus {
-            border-color: #4c51bf; /* Blue border on focus */
+            border-color: #a7bed8; /* Soft blue border on focus */
+            box-shadow: 0 0 0 2px rgba(167, 190, 216, 0.3); /* Soft glow */
         }
         input[type="date"], input[type="number"], input[type="text"] {
             padding: 8px;
             border-radius: 8px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #dcdcdc;
             font-size: 0.9rem;
             min-width: 120px; /* Ensure date input has a default size */
             outline: none;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            color: #52525b; /* Default text color for input */
         }
         input[type="date"]:focus, input[type="number"]:focus, input[type="text"]:focus {
-            border-color: #4c51bf;
+            border-color: #a7bed8;
+            box-shadow: 0 0 0 2px rgba(167, 190, 216, 0.3);
         }
         /* Crucial for fixing date input width when flexed inside a TD's inner div */
         td .payment-date-input {
@@ -98,37 +105,37 @@
         }
 
 
-        /* Status-specific background and text colors */
+        /* Status-specific background and text colors (Muted Palette) */
         .status-paid {
-            background-color: #d1fae5; /* Green 100 */
-            color: #065f46; /* Green 800 */
+            background-color: #e6f9ed; /* Very light, desaturated green */
+            color: #347c5d; /* Muted dark green */
         }
         .status-not-paid {
-            background-color: #fffacd; /* Yellow for "Not Paid (with interest)" */
-            color: #b97d10; /* Darker yellow/orange */
+            background-color: #fffbe6; /* Very light, desaturated yellow */
+            color: #9b720b; /* Muted dark yellow/ochre */
         }
         .status-absent {
-            background-color: #fee2e2; /* Red 100 */
-            color: #991b1b; /* Red 800 */
+            background-color: #fbe6e6; /* Very light, desaturated red/rose */
+            color: #8c3f3f; /* Muted dark red/brown */
         }
         .status-paid-late {
-            background-color: #e0f2fe; /* Blue 100 */
-            color: #1e40af; /* Blue 800 */
+            background-color: #e6f0fa; /* Very light, desaturated blue */
+            color: #4a6c90; /* Muted dark blue */
         }
 
-        /* Utility classes for text and background */
-        .text-green-800 { color: #065f46; }
-        .bg-green-100 { background-color: #d1fae5; }
-        .text-yellow-800 { color: #b97d10; }
-        .bg-yellow-100 { background-color: #fffacd; }
-        .text-red-800 { color: #991b1b; }
-        .bg-red-100 { background-color: #fee2e2; }
-        .text-blue-800 { color: #1e40af; }
-        .bg-blue-100 { background-color: #e0f2fe; }
+        /* Utility classes for text and background (Muted versions) */
+        .text-green-800 { color: #347c5d; }
+        .bg-green-100 { background-color: #e6f9ed; }
+        .text-yellow-800 { color: #9b720b; }
+        .bg-yellow-100 { background-color: #fffbe6; }
+        .text-red-800 { color: #8c3f3f; }
+        .bg-red-100 { background-color: #fbe6e6; }
+        .text-blue-800 { color: #4a6c90; }
+        .bg-blue-100 { background-color: #e6f0fa; }
 
         .total-funds-box {
-            background-color: #ecfdf5; /* Light green background */
-            border: 2px solid #065f46; /* Green border */
+            background-color: #eef8f3; /* Softer light green background */
+            border: 1px solid #75a892; /* Muted green border */
             border-radius: 12px;
             padding: 20px;
             margin-top: 30px;
@@ -137,35 +144,37 @@
             align-items: center;
         }
         .total-funds-box h2 {
-            font-size: 1.5rem;
+            font-size: 1.6rem; /* Slightly larger */
             font-weight: 700;
-            color: #065f46;
+            color: #347c5d; /* Muted dark green */
         }
         .total-funds-box span {
-            font-size: 2rem;
+            font-size: 2.2rem; /* Slightly larger */
             font-weight: 800;
-            color: #065f46;
+            color: #347c5d; /* Muted dark green */
         }
 
         /* Styling for payment history section */
         .payment-history-section {
             margin-top: 40px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid #e0e0e0;
             padding-top: 30px;
         }
         .payment-history-section h2 {
-            font-size: 2rem;
+            font-size: 2.2rem; /* Slightly larger for emphasis */
             font-weight: 700;
-            color: #374151;
+            color: #3f3f46;
             margin-bottom: 20px;
             text-align: center;
         }
         .history-table {
             table-layout: fixed; /* Crucial for history table alignment */
+            margin-top: 15px; /* Adjust spacing */
         }
         .history-table th {
-            background-color: #f7fafc; /* Lighter header for history */
-            color: #4a5568;
+            background-color: #f8f8f8; /* Lighter header for history */
+            color: #6a6a72; /* Slightly softer text for history header */
+            font-size: 0.8rem; /* Slightly smaller font for history table headers */
         }
         /* Explicit column widths for history table */
         .history-table th:nth-child(1) { width: 25%; } /* Student Name */
@@ -177,24 +186,25 @@
 
 
         .history-table td {
-            font-size: 0.875rem; /* Smaller text for history details */
+            font-size: 0.85rem; /* Slightly larger text for history details */
+            padding: 10px 15px; /* Adjusted padding for history table cells */
         }
         /* Specific row styling for history for better readability */
         .history-table tr:nth-child(even) {
-            background-color: #fcfcfc;
+            background-color: #fafafa; /* Very subtle alternating row color */
         }
         .history-table tr:nth-child(odd) {
             background-color: #ffffff;
         }
-        /* History row status colors */
-        .history-paid { background-color: #d1fae5; } /* Green 100 */
-        .history-paid-late { background-color: #e0f2fe; } /* Blue 100 */
-        .history-not-paid { background-color: #fffacd; } /* Yellow 100 */
-        .history-absent { background-color: #fee2e2; } /* Red 100 */
+        /* History row status colors (Muted versions) */
+        .history-paid { background-color: #eef8f3; }
+        .history-paid-late { background-color: #e6f0fa; }
+        .history-not-paid { background-color: #fffbe6; }
+        .history-absent { background-color: #fbe6e6; }
 
 
         .delete-history-btn {
-            background-color: #ef4444; /* Red 500 */
+            background-color: #e09999; /* Muted red */
             color: white;
             padding: 6px 10px;
             border-radius: 6px;
@@ -204,11 +214,11 @@
             transition: background-color 0.2s;
         }
         .delete-history-btn:hover {
-            background-color: #dc2626; /* Red 600 */
+            background-color: #d17c7c; /* Slightly darker muted red */
         }
         .clear-all-history-btn {
-            background-color: #f59e0b; /* Amber 500 */
-            color: white;
+            background-color: #f7d98b; /* Muted amber */
+            color: #7b5809; /* Darker text for contrast */
             padding: 8px 16px;
             border-radius: 8px;
             font-size: 0.9rem;
@@ -221,18 +231,18 @@
             margin-right: auto;
         }
         .clear-all-history-btn:hover {
-            background-color: #d97706; /* Amber 600 */
+            background-color: #f5cf72; /* Slightly darker muted amber */
         }
 
         /* Minimalist Reset All button */
         .reset-all-btn {
-            background-color: #e0e7ff; /* Light indigo */
-            color: #4338ca; /* Darker indigo */
+            background-color: #e9eff8; /* Soft light blue/lavender */
+            color: #5a7ea7; /* Muted darker blue */
             padding: 8px 16px;
             border-radius: 8px;
             font-size: 0.9rem;
             cursor: pointer;
-            border: 1px solid #a5b4fc; /* Indigo 300 border */
+            border: 1px solid #c0d0e6; /* Soft blue border */
             transition: background-color 0.2s, border-color 0.2s;
             margin-top: 20px;
             margin-bottom: 20px;
@@ -241,43 +251,43 @@
             margin-right: auto;
         }
         .reset-all-btn:hover {
-            background-color: #c7d2fe; /* Indigo 200 */
-            border-color: #818cf8; /* Indigo 400 */
+            background-color: #dbe4ef; /* Slightly darker */
+            border-color: #a7bed8; /* Slightly darker border */
         }
 
         /* Minimalist individual student reset button */
         .reset-student-btn {
-            background-color: #f3f4f6; /* Gray 100 */
-            color: #4b5563; /* Gray 600 */
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.65rem; /* Smaller font */
+            background-color: #f0f0f0; /* Very light gray */
+            color: #707070; /* Soft gray */
+            padding: 3px 8px; /* Slightly more padding */
+            border-radius: 6px; /* Slightly more rounded */
+            font-size: 0.7rem; /* Slightly larger font */
             cursor: pointer;
-            border: 1px solid #d1d5db; /* Gray 300 border */
+            border: 1px solid #d0d0d0; /* Soft gray border */
             transition: background-color 0.2s, border-color 0.2s;
-            margin-left: 10px; /* Space from name */
+            margin-left: 12px; /* Space from name */
             white-space: nowrap; /* Prevent text wrapping */
         }
         .reset-student-btn:hover {
-            background-color: #e5e7eb; /* Gray 200 */
-            border-color: #9ca3af; /* Gray 400 */
+            background-color: #e5e5e5; /* Slightly darker gray */
+            border-color: #b0b0b0; /* Slightly darker border */
         }
         
         /* Apply Date to All button */
         .apply-date-to-all-btn {
-            background-color: #22c55e; /* Green 500 */
-            color: white;
+            background-color: #8fe0b0; /* Muted soft green */
+            color: #347c5d; /* Darker text for contrast */
             padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.8rem;
+            border-radius: 8px; /* Slightly more rounded */
+            font-size: 0.85rem; /* Slightly larger font */
             cursor: pointer;
             border: none;
             transition: background-color 0.2s;
-            margin-left: 10px; /* Space from date input */
+            margin-left: 12px; /* Space from date input */
             white-space: nowrap; /* Prevent text wrapping */
         }
         .apply-date-to-all-btn:hover {
-            background-color: #16a34a; /* Green 600 */
+            background-color: #7bd49e; /* Slightly darker muted green */
         }
 
     </style>
