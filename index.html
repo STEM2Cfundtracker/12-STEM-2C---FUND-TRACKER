@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12 STEM 2C - FUND TRACKER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles to enhance the visual appeal and responsiveness */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align content to the top */
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff; /* White container background */
+            border-radius: 12px; /* Rounded corners for the container */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            padding: 30px;
+            width: 100%;
+            max-width: 1200px; /* Maximum width for the container */
+            overflow-x: auto; /* Enable horizontal scrolling for narrow screens */
+        }
+        table {
+            width: 100%;
+            border-collapse: separate; /* Allows for border-spacing */
+            border-spacing: 0;
+            margin-top: 20px;
+            min-width: 700px; /* Ensures the table is wide enough for content */
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb; /* Light gray border for table rows */
+        }
+        th {
+            background-color: #edf2f7; /* Light blue-gray for table headers */
+            font-weight: 600; /* Semi-bold font */
+            color: #4a5568; /* Dark gray text color */
+            position: sticky; /* Make header sticky when scrolling */
+            top: 0;
+            z-index: 10; /* Ensure header stays on top */
+        }
+        tr:hover {
+            background-color: #f9fafb; /* Light hover effect for table rows */
+        }
+        select {
+            padding: 8px;
+            border-radius: 8px; /* Rounded corners for select dropdowns */
+            border: 1px solid #d1d5db; /* Light gray border */
+            background-color: #ffffff;
+            font-size: 0.9rem;
+            min-width: 140px; /* Minimum width for dropdowns */
+            cursor: pointer;
+            outline: none; /* Remove outline on focus */
+            transition: border-color 0.2s; /* Smooth transition for border */
+        }
+        select:focus {
+            border-color: #4c51bf; /* Blue border on focus */
+        }
+        input[type="date"], input[type="number"], input[type="text"] {
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            font-size: 0.9rem;
+            min-width: 120px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="date"]:focus, input[type="number"]:focus, input[type="text"]:focus {
+            border-color: #4c51bf;
+        }
+
+        /* Status-specific background and text colors */
+        .status-paid {
+            background-color: #d1fae5; /* Green 100 */
+            color: #065f46; /* Green 800 */
+        }
+        .status-not-paid {
+            background-color: #fffacd; /* Yellow for "Not Paid (with interest)" */
+            color: #b97d10; /* Darker yellow/orange */
+        }
+        .status-absent {
+            background-color: #fee2e2; /* Red 100 */
+            color: #991b1b; /* Red 800 */
+        }
+        .status-paid-late {
+            background-color: #e0f2fe; /* Blue 100 */
+            color: #1e40af; /* Blue 800 */
+        }
+
+        /* Utility classes for text and background */
+        .text-green-800 { color: #065f46; }
+        .bg-green-100 { background-color: #d1fae5; }
+        .text-yellow-800 { color: #b97d10; }
+        .bg-yellow-100 { background-color: #fffacd; }
+        .text-red-800 { color: #991b1b; }
+        .bg-red-100 { background-color: #fee2e2; }
+        .text-blue-800 { color: #1e40af; }
+        .bg-blue-100 { background-color: #e0f2fe; }
+
+        .total-funds-box {
+            background-color: #ecfdf5; /* Light green background */
+            border: 2px solid #065f46; /* Green border */
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .total-funds-box h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #065f46;
+        }
+        .total-funds-box span {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #065f46;
+        }
+
+        /* Styling for payment history section */
+        .payment-history-section {
+            margin-top: 40px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 30px;
+        }
+        .payment-history-section h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #374151;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .history-table th {
+            background-color: #f7fafc; /* Lighter header for history */
+            color: #4a5568;
+        }
+        .history-table td {
+            font-size: 0.875rem; /* Smaller text for history details */
+        }
+        /* Specific row styling for history for better readability */
+        .history-table tr:nth-child(even) {
+            background-color: #fcfcfc;
+        }
+        .history-table tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+        .history-table tr.bg-blue-50 {
+            background-color: #eff6ff; /* Light blue for late payments in history */
+        }
+        .history-table tr.bg-green-50 {
+            background-color: #f0fdf4; /* Light green for regular payments in history */
+        }
+
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8">
+    <div class="container">
+        <h1 class="text-3xl font-extrabold text-gray-800 mb-6 text-center">12 STEM 2C - FUND TRACKER</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="flex items-center space-x-3">
+                <label for="amountPerStudent" class="text-gray-700 font-medium whitespace-nowrap">Amount Per Student:</label>
+                <input type="number" id="amountPerStudent" value="100.00" min="0" step="0.01"
+                       class="flex-grow p-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="flex items-center space-x-3">
+                <label for="trackingPeriod" class="text-gray-700 font-medium whitespace-nowrap">Tracking Period:</label>
+                <input type="text" id="trackingPeriod" value="July 2025 Contributions"
+                       class="flex-grow p-2 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+        </div>
+
+        <div class="total-funds-box">
+            <h2>Total Funds Collected:</h2>
+            <span id="totalFunds">₱0.00</span>
+        </div>
+
+        <div class="overflow-x-auto mt-8">
+            <table class="min-w-full">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">Student Name</th>
+                        <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider">Payment Date</th>
+                        <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="payment-history-section">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Payment History</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full history-table">
+                    <thead>
+                        <tr>
+                            <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider rounded-tl-lg">Student Name</th>
+                            <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
+                            <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                            <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider">Payment Date</th>
+                            <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">Recorded At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="paymentHistoryBody">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Constants and Global Variables ---
+        const studentTableBody = document.getElementById('studentTableBody');
+        const amountPerStudentInput = document.getElementById('amountPerStudent');
+        const trackingPeriodInput = document.getElementById('trackingPeriod'); // Get tracking period input
+        const totalFundsDisplay = document.getElementById('totalFunds');
+        const paymentHistoryBody = document.getElementById('paymentHistoryBody');
+        const latePaymentInterest = 1.00; // Define the ₱1.00 interest
+
+        const studentNames = [
+            "Andales, Krizzia Alexa", "Bangay, Chandy", "Binondo, Irish Kiara", "Ceasar, Schynia Lanelle", "Carbajosa, Fatima Winselth", "Cristobal, Abejah Caila", "Fuertes, Shenna", "Inopiquez, Fiona Clarice",
+            "Labod, Jezzaira", "Media, Jasmine Florence", "Nazareno, Miannel", "Plaza, Aleana Rose Klariza", "Ranile, Apple", "Sambu, Rhian Marie", "Tangaja, Mary Flor ", "Ablan, Laurence Zachary",
+            "Ablen, Rhys", "Apawan, Rasheed Kyle", "Armenion, Justin Cody", "Asentista, Paul James", "Bernante, Francis Xavier Martin", "Cabilao, John Kenneth", "Cale, Donneil", "Carmelotes, Cris James",
+            "Cortes, Marion Rae", "Esgana, Jomiel Augustine", "Esique, Vincent Kenneth", "Hortelano, Gian Carlo", "Llenes, Jack Ryan", "Loyola, Rinz Albert", "Maloloy-on, Artmeighen", "Mansueto, Joshua",
+            "Montes, Vinshee Luis", "Morales, Jaredd Wulther", "Pepito, John Marco", "Remolano, John Michael", "Zabate, Ziann Alexander"
+        ];
+        const numberOfStudents = studentNames.length;
+
+        // Data arrays - these will be loaded from localStorage or initialized
+        let students = [];
+        let paymentHistory = [];
+
+        // --- Local Storage Keys ---
+        const LOCAL_STORAGE_STUDENTS_KEY = 'stem2c_students';
+        const LOCAL_STORAGE_HISTORY_KEY = 'stem2c_payment_history';
+        const LOCAL_STORAGE_AMOUNT_KEY = 'stem2c_amount_per_student';
+        const LOCAL_STORAGE_PERIOD_KEY = 'stem2c_tracking_period';
+
+
+        // --- Data Management Functions (Load, Save, Initialize) ---
+
+        /**
+         * Loads data from localStorage.
+         */
+        function loadData() {
+            const savedStudents = localStorage.getItem(LOCAL_STORAGE_STUDENTS_KEY);
+            const savedHistory = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
+            const savedAmount = localStorage.getItem(LOCAL_STORAGE_AMOUNT_KEY);
+            const savedPeriod = localStorage.getItem(LOCAL_STORAGE_PERIOD_KEY);
+
+            if (savedStudents) {
+                students = JSON.parse(savedStudents);
+            } else {
+                // If no saved students, initialize them
+                initializeStudents();
+            }
+
+            if (savedHistory) {
+                paymentHistory = JSON.parse(savedHistory);
+            } else {
+                paymentHistory = []; // Initialize empty history if none saved
+            }
+
+            if (savedAmount) {
+                amountPerStudentInput.value = parseFloat(savedAmount).toFixed(2);
+            }
+            if (savedPeriod) {
+                trackingPeriodInput.value = savedPeriod;
+            }
+        }
+
+        /**
+         * Saves current data to localStorage.
+         */
+        function saveData() {
+            localStorage.setItem(LOCAL_STORAGE_STUDENTS_KEY, JSON.stringify(students));
+            localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(paymentHistory));
+            localStorage.setItem(LOCAL_STORAGE_AMOUNT_KEY, amountPerStudentInput.value);
+            localStorage.setItem(LOCAL_STORAGE_PERIOD_KEY, trackingPeriodInput.value);
+        }
+
+        /**
+         * Initializes the 'students' array with default data.
+         * Called only if no saved student data is found in localStorage.
+         */
+        function initializeStudents() {
+            students = []; // Clear any existing student data
+            for (let i = 0; i < numberOfStudents; i++) {
+                students.push({
+                    id: i + 1,
+                    name: studentNames[i],
+                    status: 'not-paid', // Default status
+                    paymentDate: ''      // Default empty date
+                });
+            }
+            saveData(); // Save initialized students
+        }
+
+
+        // --- Core Application Logic ---
+
+        /**
+         * Initializes the tracker by loading data and rendering tables.
+         */
+        function initializeTracker() {
+            loadData(); // Load data first
+            renderTable();
+            calculateTotalFunds();
+            renderPaymentHistory();
+            addInitialEventListeners(); // Add listeners for global inputs
+        }
+
+        /**
+         * Renders or re-renders the main student table based on the 'students' array.
+         */
+        function renderTable() {
+            studentTableBody.innerHTML = '';
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.className = `transition duration-150 ease-in-out ${getStatusClass(student.status)}`;
+
+                row.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${student.name}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                        <input type="date" value="${student.paymentDate}" data-student-id="${student.id}" class="payment-date-input">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                        <select data-student-id="${student.id}" class="status-select">
+                            <option value="paid" ${student.status === 'paid' ? 'selected' : ''} class="text-green-800">Paid</option>
+                            <option value="not-paid" ${student.status === 'not-paid' ? 'selected' : ''} class="text-yellow-800">Not Paid (with interest)</option>
+                            <option value="absent" ${student.status === 'absent' ? 'selected' : ''} class="text-red-800">Absent</option>
+                            <option value="paid-late" ${student.status === 'paid-late' ? 'selected' : ''} class="text-blue-800">Paid (late)</option>
+                        </select>
+                    </td>
+                `;
+                studentTableBody.appendChild(row);
+            });
+            addDynamicEventListeners(); // Attach listeners to newly created elements
+        }
+
+        /**
+         * Attaches event listeners to the dynamically created status select and date input elements.
+         */
+        function addDynamicEventListeners() {
+            document.querySelectorAll('.status-select').forEach(selectElement => {
+                selectElement.onchange = (event) => {
+                    const studentId = parseInt(event.target.dataset.studentId);
+                    const newStatus = event.target.value;
+                    updateStudentStatus(studentId, newStatus);
+                };
+            });
+
+            document.querySelectorAll('.payment-date-input').forEach(dateInputElement => {
+                dateInputElement.onchange = (event) => {
+                    const studentId = parseInt(event.target.dataset.studentId);
+                    const newDate = event.target.value;
+                    updateStudentDate(studentId, newDate);
+                };
+            });
+        }
+
+        /**
+         * Attaches event listeners to the static input fields (amount per student, tracking period).
+         */
+        function addInitialEventListeners() {
+            amountPerStudentInput.addEventListener('input', () => {
+                calculateTotalFunds();
+                saveData(); // Save changes to amount
+            });
+            trackingPeriodInput.addEventListener('input', () => {
+                saveData(); // Save changes to tracking period
+            });
+        }
+
+        /**
+         * Updates a student's status and triggers recalculation/history logging if necessary.
+         * @param {number} id - The ID of the student to update.
+         * @param {string} newStatus - The new status to set for the student.
+         */
+        function updateStudentStatus(id, newStatus) {
+            const studentIndex = students.findIndex(s => s.id === id);
+            if (studentIndex !== -1) {
+                const oldStatus = students[studentIndex].status;
+                students[studentIndex].status = newStatus;
+
+                const wasPreviouslyPaid = oldStatus === 'paid' || oldStatus === 'paid-late';
+                const isNowPaid = newStatus === 'paid' || newStatus === 'paid-late';
+
+                if (isNowPaid && !wasPreviouslyPaid) {
+                    addPaymentHistoryEntry(students[studentIndex]);
+                } else if (!isNowPaid && wasPreviouslyPaid) {
+                    // Optional: If you want to remove history entries when a student becomes unpaid,
+                    // you'd implement that logic here. For now, history is only added.
+                    // If you want to prevent adding duplicate history for re-paying a student,
+                    // you could check if an identical entry (student, amount, date, status) already exists.
+                }
+
+                const row = studentTableBody.children[studentIndex];
+                // Remove all status classes first, then add the new one
+                row.classList.remove('status-paid', 'status-not-paid', 'status-absent', 'status-paid-late');
+                row.classList.add(getStatusClass(newStatus));
+
+                calculateTotalFunds();
+                saveData(); // Save all data after status change
+            }
+        }
+
+        /**
+         * Updates a student's payment date.
+         * @param {number} id - The ID of the student to update.
+         * @param {string} newDate - The new date string to set.
+         */
+        function updateStudentDate(id, newDate) {
+            const studentIndex = students.findIndex(s => s.id === id);
+            if (studentIndex !== -1) {
+                students[studentIndex].paymentDate = newDate;
+                saveData(); // Save data after date change
+            }
+        }
+
+        /**
+         * Returns the appropriate CSS class based on the payment status.
+         * @param {string} status - The payment status ('paid', 'not-paid', 'absent', 'paid-late').
+         * @returns {string} The CSS class name.
+         */
+        function getStatusClass(status) {
+            switch (status) {
+                case 'paid':
+                    return 'status-paid';
+                case 'not-paid':
+                    return 'status-not-paid';
+                case 'absent':
+                    return 'status-absent';
+                case 'paid-late':
+                    return 'status-paid-late';
+                default:
+                    return '';
+            }
+        }
+
+        /**
+         * Calculates and displays the total funds collected based on students with 'paid' or 'paid-late' status.
+         */
+        function calculateTotalFunds() {
+            const amountPerStudent = parseFloat(amountPerStudentInput.value);
+            let totalCollected = 0;
+
+            if (isNaN(amountPerStudent) || amountPerStudent < 0) {
+                totalFundsDisplay.textContent = '₱0.00';
+                return;
+            }
+
+            students.forEach(student => {
+                if (student.status === 'paid') {
+                    totalCollected += amountPerStudent;
+                } else if (student.status === 'paid-late') {
+                    totalCollected += (amountPerStudent + latePaymentInterest);
+                }
+            });
+
+            totalFundsDisplay.textContent = `₱${totalCollected.toFixed(2)}`;
+        }
+
+        /**
+         * Adds a new entry to the payment history array and re-renders the history table.
+         * @param {object} student - The student object for whom the payment is recorded.
+         */
+        function addPaymentHistoryEntry(student) {
+            const amountPerStudent = parseFloat(amountPerStudentInput.value);
+
+            let collectedAmount = amountPerStudent;
+            if (student.status === 'paid-late') {
+                collectedAmount += latePaymentInterest;
+            }
+
+            const paymentDate = student.paymentDate || new Date().toISOString().slice(0, 10);
+            const statusText = student.status === 'paid' ? 'Paid' : 'Paid (late)';
+
+            const entry = {
+                studentName: student.name,
+                amount: collectedAmount,
+                status: statusText,
+                date: paymentDate,
+                recordedAt: new Date().toLocaleString()
+            };
+
+            // Prevent adding duplicate history entries for the exact same payment (same student, amount, date, status)
+            // This is a basic check; a more robust solution might involve a unique transaction ID.
+            const isDuplicate = paymentHistory.some(existingEntry =>
+                existingEntry.studentName === entry.studentName &&
+                existingEntry.amount === entry.amount &&
+                existingEntry.status === entry.status &&
+                existingEntry.date === entry.date
+                // We intentionally don't check recordedAt as it will always be different.
+            );
+
+            if (!isDuplicate) {
+                paymentHistory.push(entry);
+                renderPaymentHistory();
+                saveData(); // Save data after adding history entry
+            }
+        }
+
+        /**
+         * Renders or re-renders the payment history table based on the 'paymentHistory' array.
+         */
+        function renderPaymentHistory() {
+            paymentHistoryBody.innerHTML = '';
+
+            const sortedHistory = [...paymentHistory].sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
+
+            if (sortedHistory.length === 0) {
+                paymentHistoryBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No payment history yet. Update a student's status to "Paid" or "Paid (late)" to add entries.</td></tr>`;
+                return;
+            }
+
+            sortedHistory.forEach(entry => {
+                const row = document.createElement('tr');
+                row.className = `border-b border-gray-200 ${entry.status.includes('late') ? 'bg-blue-50' : 'bg-green-50'}`;
+
+                row.innerHTML = `
+                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${entry.studentName}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱${entry.amount.toFixed(2)}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.status}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.date}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-xs">${entry.recordedAt}</td>
+                `;
+                paymentHistoryBody.appendChild(row);
+            });
+        }
+
+
+        // --- Initialization ---
+        window.onload = initializeTracker;
+    </script>
+</body>
+</html>
