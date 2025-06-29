@@ -364,6 +364,11 @@
                     const studentId = parseInt(event.target.dataset.studentId);
                     const newDate = event.target.value;
                     updateStudentDate(studentId, newDate);
+                    // If date changes for a paid student, update history
+                    const student = students.find(s => s.id === studentId);
+                    if (student && (student.status === 'paid' || student.status === 'paid-late')) {
+                        updatePaymentHistoryEntry(student);
+                    }
                 };
             });
         }
@@ -375,6 +380,8 @@
             amountPerStudentInput.addEventListener('input', () => {
                 calculateTotalFunds();
                 saveData(); // Save changes to amount
+                // Re-render history if amount changes, to update amounts in history
+                renderPaymentHistory(); // Re-render to reflect new amounts if they were paid
             });
             trackingPeriodInput.addEventListener('input', () => {
                 saveData(); // Save changes to tracking period
@@ -391,17 +398,17 @@
             if (studentIndex !== -1) {
                 const oldStatus = students[studentIndex].status;
                 students[studentIndex].status = newStatus;
+                const student = students[studentIndex];
 
                 const wasPreviouslyPaid = oldStatus === 'paid' || oldStatus === 'paid-late';
                 const isNowPaid = newStatus === 'paid' || newStatus === 'paid-late';
 
-                if (isNowPaid && !wasPreviouslyPaid) {
-                    addPaymentHistoryEntry(students[studentIndex]);
-                } else if (!isNowPaid && wasPreviouslyPaid) {
-                    // Optional: If you want to remove history entries when a student becomes unpaid,
-                    // you'd implement that logic here. For now, history is only added.
-                    // If you want to prevent adding duplicate history for re-paying a student,
-                    // you could check if an identical entry (student, amount, date, status) already exists.
+                if (isNowPaid) {
+                    // If the student is now paid (or paid-late), add/update their history entry
+                    updatePaymentHistoryEntry(student);
+                } else if (wasPreviouslyPaid && !isNowPaid) {
+                    // If the student was paid but is no longer, remove them from history
+                    removePaymentHistoryEntry(student.name);
                 }
 
                 const row = studentTableBody.children[studentIndex];
@@ -471,10 +478,10 @@
         }
 
         /**
-         * Adds a new entry to the payment history array and re-renders the history table.
+         * Adds a new entry or updates an existing entry in the payment history array.
          * @param {object} student - The student object for whom the payment is recorded.
          */
-        function addPaymentHistoryEntry(student) {
+        function updatePaymentHistoryEntry(student) {
             const amountPerStudent = parseFloat(amountPerStudentInput.value);
 
             let collectedAmount = amountPerStudent;
@@ -485,29 +492,44 @@
             const paymentDate = student.paymentDate || new Date().toISOString().slice(0, 10);
             const statusText = student.status === 'paid' ? 'Paid' : 'Paid (late)';
 
-            const entry = {
+            // Check if an existing history entry for this student and current tracking period exists
+            const existingEntryIndex = paymentHistory.findIndex(entry =>
+                entry.studentName === student.name &&
+                entry.trackingPeriod === trackingPeriodInput.value // Associate with the current tracking period
+            );
+
+            const newEntry = {
                 studentName: student.name,
                 amount: collectedAmount,
                 status: statusText,
                 date: paymentDate,
-                recordedAt: new Date().toLocaleString()
+                recordedAt: new Date().toLocaleString(),
+                trackingPeriod: trackingPeriodInput.value // Store the tracking period with the history entry
             };
 
-            // Prevent adding duplicate history entries for the exact same payment (same student, amount, date, status)
-            // This is a basic check; a more robust solution might involve a unique transaction ID.
-            const isDuplicate = paymentHistory.some(existingEntry =>
-                existingEntry.studentName === entry.studentName &&
-                existingEntry.amount === entry.amount &&
-                existingEntry.status === entry.status &&
-                existingEntry.date === entry.date
-                // We intentionally don't check recordedAt as it will always be different.
-            );
-
-            if (!isDuplicate) {
-                paymentHistory.push(entry);
-                renderPaymentHistory();
-                saveData(); // Save data after adding history entry
+            if (existingEntryIndex !== -1) {
+                // Update the existing entry
+                paymentHistory[existingEntryIndex] = newEntry;
+            } else {
+                // Add a new entry
+                paymentHistory.push(newEntry);
             }
+            renderPaymentHistory();
+            saveData(); // Save data after updating history entry
+        }
+
+        /**
+         * Removes a payment history entry for a given student name.
+         * This is called when a student's status changes from paid to unpaid/absent.
+         * @param {string} studentName - The name of the student whose history entry should be removed.
+         */
+        function removePaymentHistoryEntry(studentName) {
+            // Filter out entries for the given student name AND current tracking period
+            paymentHistory = paymentHistory.filter(entry =>
+                !(entry.studentName === studentName && entry.trackingPeriod === trackingPeriodInput.value)
+            );
+            renderPaymentHistory();
+            saveData();
         }
 
         /**
@@ -516,14 +538,17 @@
         function renderPaymentHistory() {
             paymentHistoryBody.innerHTML = '';
 
-            const sortedHistory = [...paymentHistory].sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
+            // Filter history entries by the current tracking period and then sort
+            const filteredAndSortedHistory = paymentHistory
+                .filter(entry => entry.trackingPeriod === trackingPeriodInput.value)
+                .sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
 
-            if (sortedHistory.length === 0) {
-                paymentHistoryBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No payment history yet. Update a student's status to "Paid" or "Paid (late)" to add entries.</td></tr>`;
+            if (filteredAndSortedHistory.length === 0) {
+                paymentHistoryBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No payment history yet for this period. Update a student's status to "Paid" or "Paid (late)" to add entries.</td></tr>`;
                 return;
             }
 
-            sortedHistory.forEach(entry => {
+            filteredAndSortedHistory.forEach(entry => {
                 const row = document.createElement('tr');
                 row.className = `border-b border-gray-200 ${entry.status.includes('late') ? 'bg-blue-50' : 'bg-green-50'}`;
 
