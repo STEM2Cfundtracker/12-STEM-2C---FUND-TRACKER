@@ -389,6 +389,7 @@
          * Loads data from localStorage.
          */
         function loadData() {
+            console.log("Loading data from localStorage...");
             const savedStudents = localStorage.getItem(LOCAL_STORAGE_STUDENTS_KEY);
             const savedHistory = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
             const savedAmount = localStorage.getItem(LOCAL_STORAGE_AMOUNT_KEY);
@@ -396,21 +397,31 @@
 
             if (savedStudents) {
                 students = JSON.parse(savedStudents);
+                console.log("Students loaded from localStorage.");
             } else {
                 initializeStudents();
+                console.log("No saved students found, initializing new students.");
             }
 
             if (savedHistory) {
                 paymentHistory = JSON.parse(savedHistory);
+                console.log("Payment history loaded from localStorage.");
             } else {
                 paymentHistory = [];
+                console.log("No saved history found, initializing empty history.");
             }
 
             if (savedAmount) {
                 amountPerStudentInput.value = parseFloat(savedAmount).toFixed(2);
+                console.log("Amount per student loaded from localStorage:", amountPerStudentInput.value);
+            } else {
+                console.log("No saved amount found, defaulting to HTML value:", amountPerStudentInput.value);
             }
             if (savedPeriod) {
                 trackingPeriodInput.value = savedPeriod;
+                console.log("Tracking period loaded from localStorage:", trackingPeriodInput.value);
+            } else {
+                console.log("No saved tracking period found, defaulting to HTML value:", trackingPeriodInput.value);
             }
         }
 
@@ -422,6 +433,7 @@
             localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(paymentHistory));
             localStorage.setItem(LOCAL_STORAGE_AMOUNT_KEY, amountPerStudentInput.value);
             localStorage.setItem(LOCAL_STORAGE_PERIOD_KEY, trackingPeriodInput.value);
+            console.log("Data saved to localStorage. Amount:", amountPerStudentInput.value, "Students with status other than 'not-paid':", students.filter(s => s.status !== 'not-paid').length);
         }
 
         /**
@@ -438,7 +450,7 @@
                     paymentDate: ''
                 });
             }
-            saveData();
+            saveData(); // Save immediately after initialization
         }
 
 
@@ -448,11 +460,23 @@
          * Initializes the tracker by loading data and rendering tables.
          */
         function initializeTracker() {
-            loadData();
+            console.log("--- App Initialization Start ---");
+            loadData(); // This is where initial data loading happens
+            console.log("After loadData():");
+            console.log("Amount per student input value:", amountPerStudentInput.value);
+            // Log a simplified view of students for brevity, avoiding huge console output
+            console.log("Students data loaded (first 5 and last 5, or all if less than 10):",
+                        JSON.stringify(students.slice(0, 5).map(s => ({name: s.name, status: s.status}))) +
+                        (students.length > 10 ? " ... " : "") +
+                        JSON.stringify(students.slice(-5).map(s => ({name: s.name, status: s.status}))));
+            console.log("Payment history loaded length:", paymentHistory.length);
+
             renderTable();
-            calculateTotalFunds();
+            calculateTotalFunds(); // This calculation should now use the loaded data
+            console.log("Total Funds displayed:", totalFundsDisplay.textContent);
             renderPaymentHistory();
             addInitialEventListeners();
+            console.log("--- App Initialization End ---");
         }
 
         /**
@@ -578,12 +602,11 @@
         function addInitialEventListeners() {
             amountPerStudentInput.addEventListener('input', () => {
                 calculateTotalFunds();
-                saveData();
-                renderPaymentHistory();
+                saveData(); // Save changes to amount per student
             });
             trackingPeriodInput.addEventListener('input', () => {
-                saveData();
-                renderPaymentHistory();
+                saveData(); // Save changes to tracking period
+                renderPaymentHistory(); // Re-render history for new period
             });
 
             clearAllHistoryBtn.addEventListener('click', clearCurrentPeriodHistory);
@@ -732,6 +755,7 @@
             });
 
             totalFundsDisplay.textContent = `₱${totalCollected.toFixed(2)}`;
+            console.log("Total Funds calculated:", totalFundsDisplay.textContent);
         }
 
         /**
@@ -786,6 +810,7 @@
 
             // Add the new status change to history
             paymentHistory.push(newEntry);
+            console.log("Logged status change for:", student.name, "New history length:", paymentHistory.length);
 
             renderPaymentHistory();
             saveData();
@@ -797,6 +822,7 @@
          */
         function deleteHistoryEntry(recordedAtIdentifier) {
             paymentHistory = paymentHistory.filter(entry => entry.recordedAt !== recordedAtIdentifier);
+            console.log("Deleted history entry:", recordedAtIdentifier, "New history length:", paymentHistory.length);
             renderPaymentHistory();
             saveData();
         }
@@ -807,6 +833,7 @@
         function clearCurrentPeriodHistory() {
             if (confirm(`Are you sure you want to clear ALL payment history for "${trackingPeriodInput.value}"? This action cannot be undone.`)) {
                 paymentHistory = paymentHistory.filter(entry => entry.trackingPeriod !== trackingPeriodInput.value);
+                console.log("Cleared history for period:", trackingPeriodInput.value, "New total history length:", paymentHistory.length);
                 renderPaymentHistory();
                 saveData();
                 alert(`All payment history for "${trackingPeriodInput.value}" has been cleared.`);
