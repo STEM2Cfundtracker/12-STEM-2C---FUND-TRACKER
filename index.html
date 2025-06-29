@@ -425,8 +425,11 @@
                 `;
                 // Add "Apply to All" button only to the first student's date input
                 if (index === 0) {
+                    const displayStyle = student.paymentDate ? 'flex' : 'none'; // Initially show if date is set
                     dateInputHtml += `
-                        <button class="apply-date-to-all-btn" id="applyDateToAllBtn">Apply to All</button>
+                        <div id="applyDateContainer" style="display: ${displayStyle}; align-items: center;">
+                            <button class="apply-date-to-all-btn" id="applyDateToAllBtn">Apply to All</button>
+                        </div>
                     `;
                 }
 
@@ -465,7 +468,8 @@
                 };
             });
 
-            document.querySelectorAll('.payment-date-input').forEach(dateInputElement => {
+            document.querySelectorAll('.payment-date-input').forEach((dateInputElement, index) => {
+                // Add general date change listener for all date inputs
                 dateInputElement.onchange = (event) => {
                     const studentId = parseInt(event.target.dataset.studentId);
                     const newDate = event.target.value;
@@ -476,6 +480,11 @@
                         logStudentStatusChange(student);
                     }
                 };
+
+                // Add specific listener for the first date input to control button visibility
+                if (index === 0) {
+                    dateInputElement.addEventListener('input', toggleApplyDateButtonVisibility);
+                }
             });
 
             document.querySelectorAll('.reset-student-btn').forEach(button => {
@@ -491,6 +500,23 @@
                 applyDateToAllBtn.addEventListener('click', applyDateToAll);
             }
         }
+
+        /**
+         * Toggles the visibility of the "Apply Date to All" button based on the
+         * value of the first student's payment date input.
+         */
+        function toggleApplyDateButtonVisibility() {
+            const firstDateInput = document.querySelector('.payment-date-input');
+            const applyDateContainer = document.getElementById('applyDateContainer');
+            if (firstDateInput && applyDateContainer) {
+                if (firstDateInput.value) {
+                    applyDateContainer.style.display = 'flex';
+                } else {
+                    applyDateContainer.style.display = 'none';
+                }
+            }
+        }
+
 
         /**
          * Attaches event listeners to the static input fields (amount per student, tracking period)
