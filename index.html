@@ -39,6 +39,8 @@
             text-align: left;
             border-bottom: 1px solid #e5e7eb; /* Light gray border for table rows */
             vertical-align: middle; /* Ensure content is vertically centered in cells */
+            word-wrap: break-word; /* Allow long words to break and wrap */
+            overflow-wrap: break-word; /* Standard property for word wrapping */
         }
         th {
             background-color: #edf2f7; /* Light blue-gray for table headers */
@@ -48,7 +50,7 @@
             top: 0;
             z-index: 10; /* Ensure header stays on top */
         }
-        /* Explicit column widths for fixed table layout */
+        /* Explicit column widths for fixed table layout (main table) */
         th:nth-child(1) { width: 30%; } /* Student Name - adjust as needed */
         th:nth-child(2) { width: 40%; } /* Payment Date - adjust as needed, needs more space */
         th:nth-child(3) { width: 30%; } /* Status - adjust as needed */
@@ -158,10 +160,22 @@
             margin-bottom: 20px;
             text-align: center;
         }
+        .history-table {
+            table-layout: fixed; /* Crucial for history table alignment */
+        }
         .history-table th {
             background-color: #f7fafc; /* Lighter header for history */
             color: #4a5568;
         }
+        /* Explicit column widths for history table */
+        .history-table th:nth-child(1) { width: 25%; } /* Student Name */
+        .history-table th:nth-child(2) { width: 10%; } /* Amount */
+        .history-table th:nth-child(3) { width: 20%; } /* Status */
+        .history-table th:nth-child(4) { width: 15%; } /* Payment Date */
+        .history-table th:nth-child(5) { width: 20%; } /* Recorded At */
+        .history-table th:nth-child(6) { width: 10%; } /* Actions */
+
+
         .history-table td {
             font-size: 0.875rem; /* Smaller text for history details */
         }
@@ -497,8 +511,6 @@
                 };
             });
 
-            // Note: dateInputElement.parentElement.classList.contains('flex-items-container') is not needed
-            // since only the first date input's parent div has the ID applyDateContainer
             document.querySelectorAll('.payment-date-input').forEach((dateInputElement, index) => {
                 // Add general date change listener for all date inputs
                 dateInputElement.onchange = (event) => {
