@@ -197,6 +197,22 @@
             background-color: #3b82f6; /* Blue 500 */
         }
 
+        /* New button for individual student reset */
+        .reset-student-btn {
+            background-color: #a78bfa; /* Purple 400 */
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+            margin-left: 10px; /* Space from name */
+        }
+        .reset-student-btn:hover {
+            background-color: #8b5cf6; /* Purple 500 */
+        }
+
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
@@ -267,7 +283,7 @@
         const totalFundsDisplay = document.getElementById('totalFunds');
         const paymentHistoryBody = document.getElementById('paymentHistoryBody');
         const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn');
-        const resetAllBtn = document.getElementById('resetAllBtn'); // New reset button
+        const resetAllBtn = document.getElementById('resetAllBtn');
         const latePaymentInterest = 1.00;
 
         const studentNames = [
@@ -372,7 +388,10 @@
                 row.className = `transition duration-150 ease-in-out ${getStatusClass(student.status)}`;
 
                 row.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${student.name}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center">
+                        ${student.name}
+                        <button class="reset-student-btn" data-student-id="${student.id}">Reset</button>
+                    </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                         <input type="date" value="${student.paymentDate}" data-student-id="${student.id}" class="payment-date-input">
                     </td>
@@ -391,7 +410,8 @@
         }
 
         /**
-         * Attaches event listeners to the dynamically created status select and date input elements.
+         * Attaches event listeners to the dynamically created status select, date input,
+         * and the new individual reset buttons.
          */
         function addDynamicEventListeners() {
             document.querySelectorAll('.status-select').forEach(selectElement => {
@@ -407,18 +427,26 @@
                     const studentId = parseInt(event.target.dataset.studentId);
                     const newDate = event.target.value;
                     updateStudentDate(studentId, newDate);
-                    // Log status change if the student's status is already paid (and date changes)
                     const student = students.find(s => s.id === studentId);
+                    // Only log to history if student is in a paid state and date changes
                     if (student && (student.status === 'paid' || student.status === 'paid-late')) {
                         logStudentStatusChange(student);
                     }
                 };
             });
+
+            // New: Event listener for individual student reset buttons
+            document.querySelectorAll('.reset-student-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const studentId = parseInt(event.target.dataset.studentId);
+                    resetIndividualStudent(studentId);
+                });
+            });
         }
 
         /**
          * Attaches event listeners to the static input fields (amount per student, tracking period)
-         * and the new "Clear All History" and "Reset All" buttons.
+         * and the "Clear All History" and "Reset All" buttons.
          */
         function addInitialEventListeners() {
             amountPerStudentInput.addEventListener('input', () => {
@@ -432,7 +460,7 @@
             });
 
             clearAllHistoryBtn.addEventListener('click', clearCurrentPeriodHistory);
-            resetAllBtn.addEventListener('click', resetAllStudents); // Attach listener for the new button
+            resetAllBtn.addEventListener('click', resetAllStudents);
         }
 
         /**
@@ -443,7 +471,6 @@
         function updateStudentStatus(id, newStatus) {
             const studentIndex = students.findIndex(s => s.id === id);
             if (studentIndex !== -1) {
-                const oldStatus = students[studentIndex].status;
                 students[studentIndex].status = newStatus;
                 const student = students[studentIndex];
 
@@ -451,7 +478,6 @@
                 logStudentStatusChange(student);
 
                 const row = studentTableBody.children[studentIndex];
-                // Remove all status classes first, then add the new one
                 row.classList.remove('status-paid', 'status-not-paid', 'status-absent', 'status-paid-late');
                 row.classList.add(getStatusClass(newStatus));
 
@@ -461,23 +487,43 @@
         }
 
         /**
-         * Resets the status and payment date for all students in the main table
-         * and removes their entries from the current tracking period's history.
+         * Resets the status and payment date for a single student in the main table.
+         * Does NOT affect payment history.
+         * @param {number} id - The ID of the student to reset.
+         */
+        function resetIndividualStudent(id) {
+            const studentIndex = students.findIndex(s => s.id === id);
+            if (studentIndex !== -1) {
+                if (confirm(`Are you sure you want to reset ${students[studentIndex].name}'s status and payment date to 'Not Paid'?`)) {
+                    students[studentIndex].status = 'not-paid';
+                    students[studentIndex].paymentDate = '';
+
+                    // No change to history here, as per your request
+                    // Just update the main table and funds display
+                    renderTable(); // Re-render to show individual student's reset
+                    calculateTotalFunds();
+                    saveData();
+                    alert(`${students[studentIndex].name}'s status and date reset.`);
+                }
+            }
+        }
+
+        /**
+         * Resets the status and payment date for all students in the main table.
+         * Does NOT affect payment history.
          */
         function resetAllStudents() {
-            if (confirm("Are you sure you want to reset ALL student statuses and payment dates to 'Not Paid' for the current period? This will also clear their history entries for this period.")) {
+            if (confirm("Are you sure you want to reset ALL student statuses and payment dates to 'Not Paid'? This will NOT affect payment history entries.")) {
                 students.forEach(student => {
                     student.status = 'not-paid';
                     student.paymentDate = '';
                 });
-                // Clear history for the current period when resetting all students
-                paymentHistory = paymentHistory.filter(entry => entry.trackingPeriod !== trackingPeriodInput.value);
-
+                // NO filtering of paymentHistory here, as per your request
                 renderTable();
                 calculateTotalFunds();
-                renderPaymentHistory(); // Re-render history to show changes
+                // No need to re-render payment history if it's not affected
                 saveData();
-                alert("All student statuses and dates reset, and relevant history cleared for the current period.");
+                alert("All student statuses and dates reset in the main table.");
             }
         }
 
@@ -539,7 +585,7 @@
 
         /**
          * Logs a student's status change to the payment history array.
-         * This function now logs ALL status changes, not just paid ones.
+         * This function logs ALL status changes, not just paid ones.
          * It updates an existing entry or adds a new one.
          * @param {object} student - The student object for whom the status changed.
          */
@@ -567,13 +613,13 @@
                     break;
             }
 
-            const paymentDate = student.paymentDate || 'N/A'; // Use N/A if no date set
-            const uniqueRecordedAt = new Date().toISOString() + "_" + Math.random().toString(36).substring(2, 8); // Robust unique ID
+            const paymentDate = student.paymentDate || 'N/A';
+            const uniqueRecordedAt = new Date().toISOString() + "_" + Math.random().toString(36).substring(2, 8);
 
             const newEntry = {
                 studentName: student.name,
                 amount: collectedAmount,
-                status: statusDisplayText, // Store the display text
+                status: statusDisplayText,
                 rawStatus: student.status, // Store the raw status for conditional styling
                 date: paymentDate,
                 recordedAt: uniqueRecordedAt,
