@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>12 STEM 2C - FUND TRACKER</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         /* Custom styles to enhance the visual appeal and responsiveness */
         body {
@@ -172,7 +172,7 @@
         .delete-history-btn:hover {
             background-color: #dc2626; /* Red 600 */
         }
-        .clear-all-history-btn, .reset-all-btn {
+        .clear-all-history-btn {
             background-color: #f59e0b; /* Amber 500 */
             color: white;
             padding: 8px 16px;
@@ -186,31 +186,64 @@
             margin-left: auto;
             margin-right: auto;
         }
-        .clear-all-history-btn:hover, .reset-all-btn:hover {
+        .clear-all-history-btn:hover {
             background-color: #d97706; /* Amber 600 */
         }
+
+        /* Minimalist Reset All button */
         .reset-all-btn {
-            background-color: #60a5fa; /* Blue 400 */
+            background-color: #e0e7ff; /* Light indigo */
+            color: #4338ca; /* Darker indigo */
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 1px solid #a5b4fc; /* Indigo 300 border */
+            transition: background-color 0.2s, border-color 0.2s;
+            margin-top: 20px;
             margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
         .reset-all-btn:hover {
-            background-color: #3b82f6; /* Blue 500 */
+            background-color: #c7d2fe; /* Indigo 200 */
+            border-color: #818cf8; /* Indigo 400 */
         }
 
-        /* New button for individual student reset */
+        /* Minimalist individual student reset button */
         .reset-student-btn {
-            background-color: #a78bfa; /* Purple 400 */
-            color: white;
-            padding: 4px 8px;
+            background-color: #f3f4f6; /* Gray 100 */
+            color: #4b5563; /* Gray 600 */
+            padding: 2px 6px;
             border-radius: 4px;
-            font-size: 0.7rem;
+            font-size: 0.65rem; /* Smaller font */
+            cursor: pointer;
+            border: 1px solid #d1d5db; /* Gray 300 border */
+            transition: background-color 0.2s, border-color 0.2s;
+            margin-left: 10px; /* Space from name */
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        .reset-student-btn:hover {
+            background-color: #e5e7eb; /* Gray 200 */
+            border-color: #9ca3af; /* Gray 400 */
+        }
+        
+        /* Apply Date to All button */
+        .apply-date-to-all-btn {
+            background-color: #22c55e; /* Green 500 */
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
             cursor: pointer;
             border: none;
             transition: background-color 0.2s;
-            margin-left: 10px; /* Space from name */
+            margin-left: 10px; /* Space from date input */
+            white-space: nowrap; /* Prevent text wrapping */
         }
-        .reset-student-btn:hover {
-            background-color: #8b5cf6; /* Purple 500 */
+        .apply-date-to-all-btn:hover {
+            background-color: #16a34a; /* Green 600 */
         }
 
     </style>
@@ -383,17 +416,27 @@
          */
         function renderTable() {
             studentTableBody.innerHTML = '';
-            students.forEach(student => {
+            students.forEach((student, index) => {
                 const row = document.createElement('tr');
                 row.className = `transition duration-150 ease-in-out ${getStatusClass(student.status)}`;
+
+                let dateInputHtml = `
+                    <input type="date" value="${student.paymentDate}" data-student-id="${student.id}" class="payment-date-input">
+                `;
+                // Add "Apply to All" button only to the first student's date input
+                if (index === 0) {
+                    dateInputHtml += `
+                        <button class="apply-date-to-all-btn" id="applyDateToAllBtn">Apply to All</button>
+                    `;
+                }
 
                 row.innerHTML = `
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center">
                         ${student.name}
                         <button class="reset-student-btn" data-student-id="${student.id}">Reset</button>
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
-                        <input type="date" value="${student.paymentDate}" data-student-id="${student.id}" class="payment-date-input">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 flex items-center">
+                        ${dateInputHtml}
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                         <select data-student-id="${student.id}" class="status-select">
@@ -411,7 +454,7 @@
 
         /**
          * Attaches event listeners to the dynamically created status select, date input,
-         * and the new individual reset buttons.
+         * and the new individual reset buttons. Also for the new "Apply Date to All" button.
          */
         function addDynamicEventListeners() {
             document.querySelectorAll('.status-select').forEach(selectElement => {
@@ -435,13 +478,18 @@
                 };
             });
 
-            // Event listener for individual student reset buttons
             document.querySelectorAll('.reset-student-btn').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const studentId = parseInt(event.target.dataset.studentId);
                     resetIndividualStudent(studentId);
                 });
             });
+
+            // New: Event listener for the "Apply Date to All" button
+            const applyDateToAllBtn = document.getElementById('applyDateToAllBtn');
+            if (applyDateToAllBtn) {
+                applyDateToAllBtn.addEventListener('click', applyDateToAll);
+            }
         }
 
         /**
@@ -499,7 +547,6 @@
                     students[studentIndex].paymentDate = '';
 
                     renderTable(); // Re-render to show individual student's reset
-                    // No call to calculateTotalFunds() here, as per your request
                     saveData();
                     alert(`${students[studentIndex].name}'s status and date reset.`);
                 }
@@ -517,9 +564,38 @@
                     student.paymentDate = '';
                 });
                 renderTable();
-                // No call to calculateTotalFunds() here, as per your request
                 saveData();
                 alert("All student statuses and dates reset in the main table.");
+            }
+        }
+
+        /**
+         * Applies the date from the first student's input field to all students.
+         * Does NOT affect payment history or total funds, but will trigger history
+         * updates for already 'paid' students whose dates change.
+         */
+        function applyDateToAll() {
+            const firstDateInput = document.querySelector('.payment-date-input');
+            const dateToApply = firstDateInput ? firstDateInput.value : '';
+
+            if (!dateToApply) {
+                alert("Please select a date in the first student's date field before using 'Apply to All'.");
+                return;
+            }
+
+            if (confirm(`Are you sure you want to apply the date ${dateToApply} to ALL students? This will NOT change their payment status.`)) {
+                students.forEach(student => {
+                    const oldDate = student.paymentDate;
+                    student.paymentDate = dateToApply;
+
+                    // If a student was already paid, and their date changes, log this to history
+                    if ((student.status === 'paid' || student.status === 'paid-late') && oldDate !== dateToApply) {
+                        logStudentStatusChange(student); // This will update the existing history entry
+                    }
+                });
+                renderTable(); // Re-render to show updated dates
+                saveData();
+                alert(`Date ${dateToApply} applied to all students.`);
             }
         }
 
