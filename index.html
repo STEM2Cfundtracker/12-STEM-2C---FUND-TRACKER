@@ -536,14 +536,18 @@
                 entry.trackingPeriod === trackingPeriodInput.value
             );
 
+            // Generate a unique ID for the history entry using current time.
+            // This is crucial for deleting individual history items later.
+            // Ensure it's unique even if multiple entries happen in quick succession for the same student.
+            const uniqueRecordedAt = new Date().toISOString() + "_" + Math.random().toString(36).substring(2, 8);
+
+
             const newEntry = {
                 studentName: student.name,
                 amount: collectedAmount,
                 status: statusText,
                 date: paymentDate,
-                // Use a combination of current time and student name for a reasonably unique ID
-                // This is crucial for deleting individual history items later
-                recordedAt: new Date().toLocaleString() + "_" + student.name,
+                recordedAt: uniqueRecordedAt, // Use the more robust unique ID
                 trackingPeriod: trackingPeriodInput.value
             };
 
@@ -623,7 +627,7 @@
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱${entry.amount.toFixed(2)}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.status}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.date}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-xs">${entry.recordedAt.split('_')[0]}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-xs">${new Date(entry.recordedAt.split('_')[0]).toLocaleString()}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                         <button class="delete-history-btn" data-recorded-at="${entry.recordedAt}">Delete</button>
                     </td>
