@@ -46,6 +46,20 @@
             top: 0;
             z-index: 10; /* Ensure header stays on top */
         }
+        /* Specific column widths/min-widths for better alignment */
+        th:nth-child(1), td:nth-child(1) { /* Student Name */
+            min-width: 220px; /* Increased minimum width */
+            width: 25%;
+        }
+        th:nth-child(2), td:nth-child(2) { /* Payment Date */
+            min-width: 240px; /* Ensure enough space for date + button */
+            width: 25%;
+        }
+        th:nth-child(3), td:nth-child(3) { /* Status */
+            min-width: 180px;
+            width: 20%;
+        }
+
         tr:hover {
             background-color: #f9fafb; /* Light hover effect for table rows */
         }
@@ -74,6 +88,10 @@
         }
         input[type="date"]:focus, input[type="number"]:focus, input[type="text"]:focus {
             border-color: #4c51bf;
+        }
+        /* Crucial for fixing date input width when flexed */
+        td .payment-date-input {
+            flex-shrink: 0;
         }
 
         /* Status-specific background and text colors */
