@@ -152,12 +152,13 @@
         .history-table tr:nth-child(odd) {
             background-color: #ffffff;
         }
-        .history-table tr.bg-blue-50 {
-            background-color: #eff6ff; /* Light blue for late payments in history */
-        }
-        .history-table tr.bg-green-50 {
-            background-color: #f0fdf4; /* Light green for regular payments in history */
-        }
+        /* History row status colors */
+        .history-paid { background-color: #d1fae5; } /* Green 100 */
+        .history-paid-late { background-color: #e0f2fe; } /* Blue 100 */
+        .history-not-paid { background-color: #fffacd; } /* Yellow 100 */
+        .history-absent { background-color: #fee2e2; } /* Red 100 */
+
+
         .delete-history-btn {
             background-color: #ef4444; /* Red 500 */
             color: white;
@@ -171,7 +172,7 @@
         .delete-history-btn:hover {
             background-color: #dc2626; /* Red 600 */
         }
-        .clear-all-history-btn {
+        .clear-all-history-btn, .reset-all-btn {
             background-color: #f59e0b; /* Amber 500 */
             color: white;
             padding: 8px 16px;
@@ -185,8 +186,15 @@
             margin-left: auto;
             margin-right: auto;
         }
-        .clear-all-history-btn:hover {
+        .clear-all-history-btn:hover, .reset-all-btn:hover {
             background-color: #d97706; /* Amber 600 */
+        }
+        .reset-all-btn {
+            background-color: #60a5fa; /* Blue 400 */
+            margin-bottom: 20px;
+        }
+        .reset-all-btn:hover {
+            background-color: #3b82f6; /* Blue 500 */
         }
 
     </style>
@@ -212,6 +220,8 @@
             <h2>Total Funds Collected:</h2>
             <span id="totalFunds">₱0.00</span>
         </div>
+
+        <button id="resetAllBtn" class="reset-all-btn">Reset All Statuses & Dates</button>
 
         <div class="overflow-x-auto mt-8">
             <table class="min-w-full">
@@ -253,11 +263,12 @@
         // --- Constants and Global Variables ---
         const studentTableBody = document.getElementById('studentTableBody');
         const amountPerStudentInput = document.getElementById('amountPerStudent');
-        const trackingPeriodInput = document.getElementById('trackingPeriod'); // Get tracking period input
+        const trackingPeriodInput = document.getElementById('trackingPeriod');
         const totalFundsDisplay = document.getElementById('totalFunds');
         const paymentHistoryBody = document.getElementById('paymentHistoryBody');
-        const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn'); // New button
-        const latePaymentInterest = 1.00; // Define the ₱1.00 interest
+        const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn');
+        const resetAllBtn = document.getElementById('resetAllBtn'); // New reset button
+        const latePaymentInterest = 1.00;
 
         const studentNames = [
             "Andales, Krizzia Alexa", "Bangay, Chandy", "Binondo, Irish Kiara", "Ceasar, Schynia Lanelle", "Carbajosa, Fatima Winselth", "Cristobal, Abejah Caila", "Fuertes, Shenna", "Inopiquez, Fiona Clarice",
@@ -293,14 +304,13 @@
             if (savedStudents) {
                 students = JSON.parse(savedStudents);
             } else {
-                // If no saved students, initialize them
                 initializeStudents();
             }
 
             if (savedHistory) {
                 paymentHistory = JSON.parse(savedHistory);
             } else {
-                paymentHistory = []; // Initialize empty history if none saved
+                paymentHistory = [];
             }
 
             if (savedAmount) {
@@ -326,16 +336,16 @@
          * Called only if no saved student data is found in localStorage.
          */
         function initializeStudents() {
-            students = []; // Clear any existing student data
+            students = [];
             for (let i = 0; i < numberOfStudents; i++) {
                 students.push({
                     id: i + 1,
                     name: studentNames[i],
-                    status: 'not-paid', // Default status
-                    paymentDate: ''      // Default empty date
+                    status: 'not-paid',
+                    paymentDate: ''
                 });
             }
-            saveData(); // Save initialized students
+            saveData();
         }
 
 
@@ -345,11 +355,11 @@
          * Initializes the tracker by loading data and rendering tables.
          */
         function initializeTracker() {
-            loadData(); // Load data first
+            loadData();
             renderTable();
             calculateTotalFunds();
             renderPaymentHistory();
-            addInitialEventListeners(); // Add listeners for global inputs
+            addInitialEventListeners();
         }
 
         /**
@@ -377,7 +387,7 @@
                 `;
                 studentTableBody.appendChild(row);
             });
-            addDynamicEventListeners(); // Attach listeners to newly created elements
+            addDynamicEventListeners();
         }
 
         /**
@@ -397,10 +407,10 @@
                     const studentId = parseInt(event.target.dataset.studentId);
                     const newDate = event.target.value;
                     updateStudentDate(studentId, newDate);
-                    // If date changes for a paid student, update history
+                    // Log status change if the student's status is already paid (and date changes)
                     const student = students.find(s => s.id === studentId);
                     if (student && (student.status === 'paid' || student.status === 'paid-late')) {
-                        updatePaymentHistoryEntry(student);
+                        logStudentStatusChange(student);
                     }
                 };
             });
@@ -408,21 +418,21 @@
 
         /**
          * Attaches event listeners to the static input fields (amount per student, tracking period)
-         * and the new "Clear All History" button.
+         * and the new "Clear All History" and "Reset All" buttons.
          */
         function addInitialEventListeners() {
             amountPerStudentInput.addEventListener('input', () => {
                 calculateTotalFunds();
-                saveData(); // Save changes to amount
-                // Re-render history if amount changes, to update amounts in history
-                renderPaymentHistory(); // Re-render to reflect new amounts if they were paid
+                saveData();
+                renderPaymentHistory();
             });
             trackingPeriodInput.addEventListener('input', () => {
-                saveData(); // Save changes to tracking period
-                renderPaymentHistory(); // Re-render history when tracking period changes
+                saveData();
+                renderPaymentHistory();
             });
 
-            clearAllHistoryBtn.addEventListener('click', clearCurrentPeriodHistory); // Attach listener to the new button
+            clearAllHistoryBtn.addEventListener('click', clearCurrentPeriodHistory);
+            resetAllBtn.addEventListener('click', resetAllStudents); // Attach listener for the new button
         }
 
         /**
@@ -437,16 +447,8 @@
                 students[studentIndex].status = newStatus;
                 const student = students[studentIndex];
 
-                const wasPreviouslyPaid = oldStatus === 'paid' || oldStatus === 'paid-late';
-                const isNowPaid = newStatus === 'paid' || newStatus === 'paid-late';
-
-                if (isNowPaid) {
-                    // If the student is now paid (or paid-late), add/update their history entry
-                    updatePaymentHistoryEntry(student);
-                } else if (wasPreviouslyPaid && !isNowPaid) {
-                    // If the student was paid but is no longer, remove them from history
-                    removePaymentHistoryEntryByStudentAndPeriod(student.name, trackingPeriodInput.value);
-                }
+                // Log every status change to history
+                logStudentStatusChange(student);
 
                 const row = studentTableBody.children[studentIndex];
                 // Remove all status classes first, then add the new one
@@ -454,7 +456,28 @@
                 row.classList.add(getStatusClass(newStatus));
 
                 calculateTotalFunds();
-                saveData(); // Save all data after status change
+                saveData();
+            }
+        }
+
+        /**
+         * Resets the status and payment date for all students in the main table
+         * and removes their entries from the current tracking period's history.
+         */
+        function resetAllStudents() {
+            if (confirm("Are you sure you want to reset ALL student statuses and payment dates to 'Not Paid' for the current period? This will also clear their history entries for this period.")) {
+                students.forEach(student => {
+                    student.status = 'not-paid';
+                    student.paymentDate = '';
+                });
+                // Clear history for the current period when resetting all students
+                paymentHistory = paymentHistory.filter(entry => entry.trackingPeriod !== trackingPeriodInput.value);
+
+                renderTable();
+                calculateTotalFunds();
+                renderPaymentHistory(); // Re-render history to show changes
+                saveData();
+                alert("All student statuses and dates reset, and relevant history cleared for the current period.");
             }
         }
 
@@ -467,7 +490,7 @@
             const studentIndex = students.findIndex(s => s.id === id);
             if (studentIndex !== -1) {
                 students[studentIndex].paymentDate = newDate;
-                saveData(); // Save data after date change
+                saveData();
             }
         }
 
@@ -515,79 +538,70 @@
         }
 
         /**
-         * Adds a new entry or updates an existing entry in the payment history array.
-         * @param {object} student - The student object for whom the payment is recorded.
+         * Logs a student's status change to the payment history array.
+         * This function now logs ALL status changes, not just paid ones.
+         * It updates an existing entry or adds a new one.
+         * @param {object} student - The student object for whom the status changed.
          */
-        function updatePaymentHistoryEntry(student) {
+        function logStudentStatusChange(student) {
             const amountPerStudent = parseFloat(amountPerStudentInput.value);
+            let collectedAmount = 0;
+            let statusDisplayText = '';
 
-            let collectedAmount = amountPerStudent;
-            if (student.status === 'paid-late') {
-                collectedAmount += latePaymentInterest;
+            switch (student.status) {
+                case 'paid':
+                    collectedAmount = amountPerStudent;
+                    statusDisplayText = 'Paid';
+                    break;
+                case 'paid-late':
+                    collectedAmount = amountPerStudent + latePaymentInterest;
+                    statusDisplayText = 'Paid (late)';
+                    break;
+                case 'not-paid':
+                    collectedAmount = amountPerStudent + latePaymentInterest; // Still shows the potential amount + interest for context
+                    statusDisplayText = 'Not Paid (with interest)';
+                    break;
+                case 'absent':
+                    collectedAmount = 0; // Absent means no payment due for that event
+                    statusDisplayText = 'Absent';
+                    break;
             }
 
-            const paymentDate = student.paymentDate || new Date().toISOString().slice(0, 10);
-            // Use the student's actual status for the history text
-            const statusText = student.status === 'paid' ? 'Paid' : (student.status === 'paid-late' ? 'Paid (late)' : student.status);
-
-
-            // Generate a unique ID for the history entry using current time.
-            // This is crucial for deleting individual history items later.
-            // Ensure it's unique even if multiple entries happen in quick succession for the same student.
-            const uniqueRecordedAt = new Date().toISOString() + "_" + Math.random().toString(36).substring(2, 8);
-
+            const paymentDate = student.paymentDate || 'N/A'; // Use N/A if no date set
+            const uniqueRecordedAt = new Date().toISOString() + "_" + Math.random().toString(36).substring(2, 8); // Robust unique ID
 
             const newEntry = {
                 studentName: student.name,
                 amount: collectedAmount,
-                status: statusText, // Use the proper status text
+                status: statusDisplayText, // Store the display text
+                rawStatus: student.status, // Store the raw status for conditional styling
                 date: paymentDate,
-                recordedAt: uniqueRecordedAt, // Use the more robust unique ID
+                recordedAt: uniqueRecordedAt,
                 trackingPeriod: trackingPeriodInput.value
             };
 
-            // Check if an existing history entry for this student and current tracking period exists
-            const existingEntryIndex = paymentHistory.findIndex(entry =>
-                entry.studentName === student.name &&
-                entry.trackingPeriod === trackingPeriodInput.value
-            );
-
-            if (existingEntryIndex !== -1) {
-                // Update the existing entry
-                paymentHistory[existingEntryIndex] = newEntry;
-            } else {
-                // Add a new entry
-                paymentHistory.push(newEntry);
-            }
-            renderPaymentHistory();
-            saveData(); // Save data after updating history entry
-        }
-
-        /**
-         * Removes a payment history entry for a given student name and tracking period.
-         * This is called when a student's status changes from paid to unpaid/absent.
-         * @param {string} studentName - The name of the student whose history entry should be removed.
-         * @param {string} trackingPeriod - The tracking period to which the entry belongs.
-         */
-        function removePaymentHistoryEntryByStudentAndPeriod(studentName, trackingPeriod) {
+            // Remove any *previous* entry for this student within the *current tracking period*
+            // before adding the new one, to ensure only the latest status for a given period is shown.
+            // This effectively "updates" the history for that student in that period.
             paymentHistory = paymentHistory.filter(entry =>
-                !(entry.studentName === studentName && entry.trackingPeriod === trackingPeriod)
+                !(entry.studentName === student.name && entry.trackingPeriod === trackingPeriodInput.value)
             );
+
+            // Add the new status change to history
+            paymentHistory.push(newEntry);
+
             renderPaymentHistory();
             saveData();
         }
 
         /**
-         * Deletes a specific history entry based on its unique 'recordedAt' timestamp.
+         * Removes a specific history entry based on its unique 'recordedAt' timestamp.
          * @param {string} recordedAtIdentifier - The unique identifier of the history entry.
          */
         function deleteHistoryEntry(recordedAtIdentifier) {
             paymentHistory = paymentHistory.filter(entry => entry.recordedAt !== recordedAtIdentifier);
             renderPaymentHistory();
             saveData();
-            // No need to recalculate total funds here, as deleting history doesn't directly
-            // change the main table's status; it's a history management tool.
-            // If you change a status in the main table FROM paid to unpaid, that's what triggers fund recalculation.
         }
 
         /**
@@ -612,16 +626,17 @@
             // Filter history entries by the current tracking period and then sort
             const filteredAndSortedHistory = paymentHistory
                 .filter(entry => entry.trackingPeriod === trackingPeriodInput.value)
-                .sort((a, b) => new Date(b.recordedAt.split('_')[0]) - new Date(a.recordedAt.split('_')[0])); // Sort by actual date part
+                .sort((a, b) => new Date(b.recordedAt.split('_')[0]) - new Date(a.recordedAt.split('_')[0]));
 
             if (filteredAndSortedHistory.length === 0) {
-                paymentHistoryBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No payment history yet for this period. Update a student's status to "Paid" or "Paid (late)" to add entries.</td></tr>`;
+                paymentHistoryBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No payment history yet for this period. Update a student's status to record entries.</td></tr>`;
                 return;
             }
 
             filteredAndSortedHistory.forEach(entry => {
                 const row = document.createElement('tr');
-                row.className = `border-b border-gray-200 ${entry.status.includes('late') ? 'bg-blue-50' : 'bg-green-50'}`;
+                // Use rawStatus for consistent background coloring in history
+                row.className = `border-b border-gray-200 history-${entry.rawStatus}`;
 
                 row.innerHTML = `
                     <td class="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">${entry.studentName}</td>
