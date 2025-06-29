@@ -158,6 +158,36 @@
         .history-table tr.bg-green-50 {
             background-color: #f0fdf4; /* Light green for regular payments in history */
         }
+        .delete-history-btn {
+            background-color: #ef4444; /* Red 500 */
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+        }
+        .delete-history-btn:hover {
+            background-color: #dc2626; /* Red 600 */
+        }
+        .clear-all-history-btn {
+            background-color: #f59e0b; /* Amber 500 */
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+            margin-top: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .clear-all-history-btn:hover {
+            background-color: #d97706; /* Amber 600 */
+        }
 
     </style>
 </head>
@@ -199,7 +229,8 @@
 
         <div class="payment-history-section">
             <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Payment History</h2>
-            <div class="overflow-x-auto">
+            <button id="clearAllHistoryBtn" class="clear-all-history-btn">Clear All History for Current Period</button>
+            <div class="overflow-x-auto mt-4">
                 <table class="min-w-full history-table">
                     <thead>
                         <tr>
@@ -207,7 +238,8 @@
                             <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
                             <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                             <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider">Payment Date</th>
-                            <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">Recorded At</th>
+                            <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider">Recorded At</th>
+                            <th class="py-3 px-4 border-b-2 border-gray-200 bg-gray-100 text-left text-xs leading-4 font-semibold text-gray-600 uppercase tracking-wider rounded-tr-lg">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="paymentHistoryBody">
@@ -224,6 +256,7 @@
         const trackingPeriodInput = document.getElementById('trackingPeriod'); // Get tracking period input
         const totalFundsDisplay = document.getElementById('totalFunds');
         const paymentHistoryBody = document.getElementById('paymentHistoryBody');
+        const clearAllHistoryBtn = document.getElementById('clearAllHistoryBtn'); // New button
         const latePaymentInterest = 1.00; // Define the ₱1.00 interest
 
         const studentNames = [
@@ -374,7 +407,8 @@
         }
 
         /**
-         * Attaches event listeners to the static input fields (amount per student, tracking period).
+         * Attaches event listeners to the static input fields (amount per student, tracking period)
+         * and the new "Clear All History" button.
          */
         function addInitialEventListeners() {
             amountPerStudentInput.addEventListener('input', () => {
@@ -385,7 +419,10 @@
             });
             trackingPeriodInput.addEventListener('input', () => {
                 saveData(); // Save changes to tracking period
+                renderPaymentHistory(); // Re-render history when tracking period changes
             });
+
+            clearAllHistoryBtn.addEventListener('click', clearCurrentPeriodHistory); // Attach listener to the new button
         }
 
         /**
@@ -408,7 +445,8 @@
                     updatePaymentHistoryEntry(student);
                 } else if (wasPreviouslyPaid && !isNowPaid) {
                     // If the student was paid but is no longer, remove them from history
-                    removePaymentHistoryEntry(student.name);
+                    // We now use updatePaymentHistoryEntry to handle this by setting a "removed" state
+                    removePaymentHistoryEntryByStudentAndPeriod(student.name, trackingPeriodInput.value);
                 }
 
                 const row = studentTableBody.children[studentIndex];
@@ -495,7 +533,7 @@
             // Check if an existing history entry for this student and current tracking period exists
             const existingEntryIndex = paymentHistory.findIndex(entry =>
                 entry.studentName === student.name &&
-                entry.trackingPeriod === trackingPeriodInput.value // Associate with the current tracking period
+                entry.trackingPeriod === trackingPeriodInput.value
             );
 
             const newEntry = {
@@ -503,8 +541,10 @@
                 amount: collectedAmount,
                 status: statusText,
                 date: paymentDate,
-                recordedAt: new Date().toLocaleString(),
-                trackingPeriod: trackingPeriodInput.value // Store the tracking period with the history entry
+                // Use a combination of current time and student name for a reasonably unique ID
+                // This is crucial for deleting individual history items later
+                recordedAt: new Date().toLocaleString() + "_" + student.name,
+                trackingPeriod: trackingPeriodInput.value
             };
 
             if (existingEntryIndex !== -1) {
@@ -519,18 +559,44 @@
         }
 
         /**
-         * Removes a payment history entry for a given student name.
+         * Removes a payment history entry for a given student name and tracking period.
          * This is called when a student's status changes from paid to unpaid/absent.
          * @param {string} studentName - The name of the student whose history entry should be removed.
+         * @param {string} trackingPeriod - The tracking period to which the entry belongs.
          */
-        function removePaymentHistoryEntry(studentName) {
-            // Filter out entries for the given student name AND current tracking period
+        function removePaymentHistoryEntryByStudentAndPeriod(studentName, trackingPeriod) {
             paymentHistory = paymentHistory.filter(entry =>
-                !(entry.studentName === studentName && entry.trackingPeriod === trackingPeriodInput.value)
+                !(entry.studentName === studentName && entry.trackingPeriod === trackingPeriod)
             );
             renderPaymentHistory();
             saveData();
         }
+
+        /**
+         * Deletes a specific history entry based on its unique 'recordedAt' timestamp.
+         * @param {string} recordedAtIdentifier - The unique identifier of the history entry.
+         */
+        function deleteHistoryEntry(recordedAtIdentifier) {
+            paymentHistory = paymentHistory.filter(entry => entry.recordedAt !== recordedAtIdentifier);
+            renderPaymentHistory();
+            saveData();
+            // No need to recalculate total funds here, as deleting history doesn't directly
+            // change the main table's status; it's a history management tool.
+            // If you change a status in the main table FROM paid to unpaid, that's what triggers fund recalculation.
+        }
+
+        /**
+         * Clears all payment history entries for the currently selected tracking period.
+         */
+        function clearCurrentPeriodHistory() {
+            if (confirm(`Are you sure you want to clear ALL payment history for "${trackingPeriodInput.value}"? This action cannot be undone.`)) {
+                paymentHistory = paymentHistory.filter(entry => entry.trackingPeriod !== trackingPeriodInput.value);
+                renderPaymentHistory();
+                saveData();
+                alert(`All payment history for "${trackingPeriodInput.value}" has been cleared.`);
+            }
+        }
+
 
         /**
          * Renders or re-renders the payment history table based on the 'paymentHistory' array.
@@ -541,10 +607,10 @@
             // Filter history entries by the current tracking period and then sort
             const filteredAndSortedHistory = paymentHistory
                 .filter(entry => entry.trackingPeriod === trackingPeriodInput.value)
-                .sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
+                .sort((a, b) => new Date(b.recordedAt.split('_')[0]) - new Date(a.recordedAt.split('_')[0])); // Sort by actual date part
 
             if (filteredAndSortedHistory.length === 0) {
-                paymentHistoryBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No payment history yet for this period. Update a student's status to "Paid" or "Paid (late)" to add entries.</td></tr>`;
+                paymentHistoryBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No payment history yet for this period. Update a student's status to "Paid" or "Paid (late)" to add entries.</td></tr>`;
                 return;
             }
 
@@ -557,9 +623,22 @@
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">₱${entry.amount.toFixed(2)}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.status}</td>
                     <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">${entry.date}</td>
-                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-xs">${entry.recordedAt}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-xs">${entry.recordedAt.split('_')[0]}</td>
+                    <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
+                        <button class="delete-history-btn" data-recorded-at="${entry.recordedAt}">Delete</button>
+                    </td>
                 `;
                 paymentHistoryBody.appendChild(row);
+            });
+
+            // Attach event listeners to the new delete buttons
+            document.querySelectorAll('.delete-history-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const recordedAt = event.target.dataset.recordedAt;
+                    if (confirm("Are you sure you want to delete this payment history entry?")) {
+                        deleteHistoryEntry(recordedAt);
+                    }
+                });
             });
         }
 
