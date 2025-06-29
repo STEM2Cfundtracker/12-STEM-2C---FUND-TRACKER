@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>12 STEM 2C - FUND TRACKER</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght400;600;700&display=swap" rel="stylesheet">
     <style>
         /* Custom styles to enhance the visual appeal and responsiveness */
         body {
@@ -435,7 +435,7 @@
                 };
             });
 
-            // New: Event listener for individual student reset buttons
+            // Event listener for individual student reset buttons
             document.querySelectorAll('.reset-student-btn').forEach(button => {
                 button.addEventListener('click', (event) => {
                     const studentId = parseInt(event.target.dataset.studentId);
@@ -481,27 +481,25 @@
                 row.classList.remove('status-paid', 'status-not-paid', 'status-absent', 'status-paid-late');
                 row.classList.add(getStatusClass(newStatus));
 
-                calculateTotalFunds();
+                calculateTotalFunds(); // This is where total funds are correctly updated
                 saveData();
             }
         }
 
         /**
          * Resets the status and payment date for a single student in the main table.
-         * Does NOT affect payment history.
+         * Does NOT affect payment history or total funds.
          * @param {number} id - The ID of the student to reset.
          */
         function resetIndividualStudent(id) {
             const studentIndex = students.findIndex(s => s.id === id);
             if (studentIndex !== -1) {
-                if (confirm(`Are you sure you want to reset ${students[studentIndex].name}'s status and payment date to 'Not Paid'?`)) {
+                if (confirm(`Are you sure you want to reset ${students[studentIndex].name}'s status and payment date to 'Not Paid'? This will NOT affect total funds or payment history.`)) {
                     students[studentIndex].status = 'not-paid';
                     students[studentIndex].paymentDate = '';
 
-                    // No change to history here, as per your request
-                    // Just update the main table and funds display
                     renderTable(); // Re-render to show individual student's reset
-                    calculateTotalFunds();
+                    // No call to calculateTotalFunds() here, as per your request
                     saveData();
                     alert(`${students[studentIndex].name}'s status and date reset.`);
                 }
@@ -510,18 +508,16 @@
 
         /**
          * Resets the status and payment date for all students in the main table.
-         * Does NOT affect payment history.
+         * Does NOT affect payment history or total funds.
          */
         function resetAllStudents() {
-            if (confirm("Are you sure you want to reset ALL student statuses and payment dates to 'Not Paid'? This will NOT affect payment history entries.")) {
+            if (confirm("Are you sure you want to reset ALL student statuses and payment dates to 'Not Paid'? This will NOT affect total funds or payment history entries.")) {
                 students.forEach(student => {
                     student.status = 'not-paid';
                     student.paymentDate = '';
                 });
-                // NO filtering of paymentHistory here, as per your request
                 renderTable();
-                calculateTotalFunds();
-                // No need to re-render payment history if it's not affected
+                // No call to calculateTotalFunds() here, as per your request
                 saveData();
                 alert("All student statuses and dates reset in the main table.");
             }
